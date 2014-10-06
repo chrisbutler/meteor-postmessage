@@ -1,13 +1,13 @@
 {
-  "name": "postmessage",
+  "name": "simple-postmessage",
   "description": "Simple and easy window.postMessage communication",
-  "version": "0.1.3",
-  "homepage": "https://github.com/thomassturm/ender-postmessage",
-  "authors": ["Thomas Sturm <@thomassturm>"],
+  "version": "0.0.1",
+  "homepage": "https://github.com/LeoDutra/simple-postmessage",
+  "authors": ["Leo Dutra <@leodutra>"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/thomassturm/ender-postmessage.git"
+    "url": "https://github.com/LeoDutra/simple-postmessage.git"
   },
-  "keywords": ["ender", "postmessage"],
-  "main": "./ender-postmessage.js"
+  "keywords": ["simple", "postmessage"],
+  "main": "./simple-postmessage.js"
 }
