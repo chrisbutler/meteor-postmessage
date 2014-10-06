@@ -7,7 +7,7 @@ and [Thomas Sturm's ender-postMessage](https://github.com/thomassturm/ender-post
 
 simple-postMessage enables simple and easy window.postMessage communication in browsers that support it (FF3+, Safari 4+, IE8+), while falling back to a document.location.hash communication method for all other browsers (IE6, IE7).
 
-*simple-postMessage uses `JSON.parse/stringify()` to post/receive JavaScript objects as message on IE9 and IE8.*
+*simple-postMessage uses `JSON.parse/stringify()` to post/receive JavaScript objects as message on IE9 and IE8 (although, IE8 compat. mode has no JSON and you'll need Crockford's json.js to support it).*
 
 *simple-postMessage uses `encode/decodeURIComponent()` to send safe messages on older browsers (and fixes Mozilla's "+" problem).*
 
