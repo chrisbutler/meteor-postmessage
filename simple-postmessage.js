@@ -51,9 +51,9 @@
       JSON = window.JSON,
 
       // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
-      // http://stackoverflow.com/a/15983064/1260526
+      //   http://stackoverflow.com/a/15983064/1260526
       ua = navigator.userAgent.toLowerCase(),
-      IE_VERSION = ~ua.indexOf('msie') ? ua.split('msie')[1] | 0 : 0; // "~"" -> "x !== -1"
+      IE_VERSION = ~ua.indexOf('msie') && ua.split('msie')[1] | 0; // "~"" -> "x !== -1"
 	
 	  // Method: window.postMessage
 	  // 
@@ -96,7 +96,7 @@
 		if ( has_postMessage ) {
 
 		  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
-		  if ( IE_VERSION == 9 || (IE_VERSION == 8 && JSON /*IE8 compatibility mode has no JSON*/ )) { 
+		  if ( IE_VERSION > 10 && JSON /*IE8 compatibility mode has no JSON*/ ) { 
 		  	message = JSON.stringify(message);
 		  }
 
@@ -177,7 +177,7 @@
 				return FALSE;
 			  }
 			  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
-			  if ( IE_VERSION == 9 || (IE_VERSION == 8 && JSON /*IE8 compatibility mode has no JSON*/ )) { 
+			  if ( IE_VERSION > 10 && JSON /*IE8 compatibility mode has no JSON*/ ) { 
 			    e = JSON.parse(e);
 			  }
 			  callback( e );
@@ -194,8 +194,9 @@
 		  // Since the browser sucks, a polling loop will be started, and the
 		  // callback will be called whenever the location.hash changes.
 		  
-		  if ( interval_id ) clearInterval( interval_id );
-		  interval_id = null;
+		  if ( interval_id ) {
+		    interval_id = clearInterval( interval_id );
+		  }
 		  
 		  if ( callback ) {
 			delay = source_origin_type === 'number'
