@@ -90,16 +90,17 @@
 		//   https://developer.mozilla.org/en-US/docs/Web/API/Window.opener
 		//   https://developer.mozilla.org/en-US/docs/Web/API/Window.parent
 		target = target || opener || parent;
+
+		// IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
+		// works for IE7, IE6 if Crockford's json.js is present
+		if ( IE_VERSION > 10 && JSON /*IE8 compatibility mode has no JSON*/ ) { 
+			message = JSON.stringify(message);
+		}
 		
 		// The browser supports window.postMessage, so call it with a targetOrigin
 		// set appropriately, based on the target_url parameter.
 		if ( has_postMessage ) {
-
-		  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
-		  if ( IE_VERSION > 10 && JSON /*IE8 compatibility mode has no JSON*/ ) { 
-		  	message = JSON.stringify(message);
-		  }
-
+		  
 		  target[postMessage]( message, target_url.replace( /([^:]+:\/\/[^\/]+).*/, '$1' ) );
 		}
 
@@ -177,6 +178,7 @@
 				return FALSE;
 			  }
 			  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
+			  // works for IE7, IE6 if Crockford's json.js is present
 			  if ( IE_VERSION > 10 && JSON /*IE8 compatibility mode has no JSON*/ ) { 
 			    e = JSON.parse(e);
 			  }
@@ -215,7 +217,10 @@
 				document.location.hash = original_hash ? original_hash : '';
 				// replace(/\+/gim, ' ') fixes a Mozilla bug
 				//   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
-				callback({ data: decodeURIComponent(hash.replace( re, '' ).replace(/\+/gim, ' ')) }); 
+				var data = decodeURIComponent(hash.replace( re, '' ).replace(/\+/gim, ' '));
+				callback({ 
+					data: JSON ? JSON.parse(data) : data
+				}); 
 			  }
 			}, delay );
 		  }
