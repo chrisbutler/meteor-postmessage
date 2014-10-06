@@ -48,12 +48,20 @@
 
 	  // feature detection  
       has_postMessage = window[postMessage],
-      JSON = window.JSON,
+      JSON = window.JSON, // IE8+ has JSON. IE8 compatibility mode has no JSON. Crockford's json.js can be used
 
       // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
       //   http://stackoverflow.com/a/15983064/1260526
       ua = navigator.userAgent.toLowerCase(),
       IE_VERSION = ~ua.indexOf('msie') && parseInt(ua.split('msie')[1], 10); // "~"" -> "x !== -1"
+
+      var serialize = function(any) {
+      	return JSON ? JSON.stringify(any) : any;
+      };
+
+      var deserialize = function(any) {
+      	return JSON ? JSON.parse(any) : any;
+      }
 	
 	  // Method: window.postMessage
 	  // 
@@ -90,17 +98,17 @@
 		//   https://developer.mozilla.org/en-US/docs/Web/API/Window.opener
 		//   https://developer.mozilla.org/en-US/docs/Web/API/Window.parent
 		target = target || opener || parent;
-
-		// IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
-		// works for IE7, IE6 if Crockford's json.js is present
-		if ( IE_VERSION > 10 && JSON /*IE8 compatibility mode has no JSON*/ ) { 
-			message = JSON.stringify(message);
-		}
 		
 		// The browser supports window.postMessage, so call it with a targetOrigin
 		// set appropriately, based on the target_url parameter.
 		if ( has_postMessage ) {
-		  
+
+		  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
+		  // works for IE7, IE6 if Crockford's json.js is present
+		  if ( IE_VERSION > 10 ) { 
+		    message = serialize(message);
+		  }
+
 		  target[postMessage]( message, target_url.replace( /([^:]+:\/\/[^\/]+).*/, '$1' ) );
 		}
 
@@ -108,9 +116,11 @@
 		  // of the target to target_url#message. A bit ugly, but it works! A cache
 		  // bust parameter is added to ensure that repeat messages trigger the
 		  // callback.
-		else
+		else {	
+
 		  // encodeURIComponent prevents errors when sending URLs and invalid URI characters
-		  target.location = target_url.replace( /#.*$/, '' ) + '#' + (+new Date) + (++cache_bust) + '&' + encodeURIComponent(message);
+		  target.location = target_url.replace( /#.*$/, '' ) + '#' + (+new Date) + (++cache_bust) + '&' + encodeURIComponent(serialize(message));
+		}
 	  };
 	  
 	  // Method: window.receiveMessage
@@ -179,8 +189,8 @@
 			  }
 			  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
 			  // works for IE7, IE6 if Crockford's json.js is present
-			  if ( IE_VERSION > 10 && JSON /*IE8 compatibility mode has no JSON*/ ) { 
-			    e = JSON.parse(e);
+			  if ( IE_VERSION > 10 ) { 
+			    e = deserialize(e);
 			  }
 			  callback( e );
 			};
@@ -215,11 +225,11 @@
 			  if ( hash !== last_hash && hash !== original_hash && re.test( hash ) ) {
 				last_hash = hash;
 				document.location.hash = original_hash ? original_hash : '';
-				// replace(/\+/gim, ' ') fixes a Mozilla bug
-				//   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
-				var data = decodeURIComponent(hash.replace( re, '' ).replace(/\+/gim, ' '));
 				callback({ 
-					data: JSON ? JSON.parse(data) : data
+
+					// replace(/\+/gim, ' ') fixes a Mozilla bug
+					//   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
+					data: deserialize(decodeURIComponent(hash.replace( re, '' ).replace(/\+/gim, ' ')))
 				}); 
 			  }
 			}, delay );
