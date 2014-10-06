@@ -11,7 +11,7 @@ simple-postMessage enables simple and easy window.postMessage communication in b
 
 *simple-postMessage uses `encode/decodeURIComponent()` to send safe messages on older browsers (and fixes Mozilla's "+" problem).*
 
-** IE8 doesn’t allow to postMessage to other windows, only to iframes. **
+**IE8 doesn’t allow to postMessage to other windows, only to iframes.**
 
 ## Release History ##
 
