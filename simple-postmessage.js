@@ -1,4 +1,9 @@
-/*
+/* simple postMessage
+ * by Leonardo Dutra (https://github.com/LeoDutra)
+ * Dual licensed under the MIT and GPL licenses.
+ *
+ * based on
+ *
  * ender postMessage - v0.1.3 - 5/1/2012
  * by Thomas Sturm http://www.sturm.to
  * Dual licensed under the MIT and GPL licenses.
@@ -13,6 +18,9 @@
  */
 
 // Release History
+// visit https://github.com/LeoDutra/simple-postmessage/releases
+//
+//
 // ender postMessage
 // 0.1.3 - (5/1/2012) compatible with browserify
 // 0.1.2 - (5/26/2011) Initial Fork and Release
@@ -26,36 +34,40 @@
      var interval_id,
 	  last_hash,
 	  original_hash,
-	  cache_bust = 1,
+	  cache_bust = 0,
 		
 	  // A var used in awesome browsers.
 	  rm_callback,
 		
 	  // A few convenient shortcuts.
-	  window = this,
 	  FALSE = !1,
 		
 	  // Reused internal strings.
 	  postMessage = 'postMessage',
 	  addEventListener = 'addEventListener',
 
-      has_postMessage = window[postMessage];
-     
-      fn = {};
+	  // feature detection  
+      has_postMessage = window[postMessage],
+      JSON = window.JSON,
+
+      // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
+      // http://stackoverflow.com/a/15983064/1260526
+      ua = navigator.userAgent.toLowerCase(),
+      IE_VERSION = ~ua.indexOf('msie') ? ua.split('msie')[1] | 0 : 0; // "~"" -> "x !== -1"
 	
-	  // Method: ender.postMessage
+	  // Method: window.postMessage
 	  // 
 	  // This method will call window.postMessage if available, setting the
 	  // targetOrigin parameter to the base of the target_url parameter for maximum
 	  // security in browsers that support it. If window.postMessage is not available,
 	  // the target window's location.hash will be used to pass the message. 
 	  //
-	  // Please Note: The ender version does not support the jQuery object serialization 
+	  // Please Note: This version does not support the jQuery object serialization 
 	  // for postMessage
 	  // 
 	  // Usage:
 	  // 
-	  // > ender.postMessage( message, target_url [, target ] );
+	  // > window.postMessage( message, target_url [, target ] );
 	  // 
 	  // Arguments:
 	  // 
@@ -71,27 +83,36 @@
 	  // 
 	  //  Nothing.
 	  
-	  fn.postMessage = function( message, target_url, target ) {
-		if ( !target_url ) { return; }
+	  window.simplePostMessage = function( message, target_url, target ) {
+		if (!target_url) return;
 		
-		// Default to parent if unspecified.
-		target = target || parent;
+		// Try to default to opener, parent if unspecified or cross-domain
+		//   https://developer.mozilla.org/en-US/docs/Web/API/Window.opener
+		//   https://developer.mozilla.org/en-US/docs/Web/API/Window.parent
+		target = target || opener || parent;
 		
+		// The browser supports window.postMessage, so call it with a targetOrigin
+		// set appropriately, based on the target_url parameter.
 		if ( has_postMessage ) {
-		  // The browser supports window.postMessage, so call it with a targetOrigin
-		  // set appropriately, based on the target_url parameter.
+
+		  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
+		  if ( IE_VERSION == 9 || (IE_VERSION == 8 && JSON /*IE8 compatibility mode has no JSON*/ )) { 
+		  	message = JSON.stringify(message);
+		  }
+
 		  target[postMessage]( message, target_url.replace( /([^:]+:\/\/[^\/]+).*/, '$1' ) );
-		  
-		} else if ( target_url ) {
+		}
+
 		  // The browser does not support window.postMessage, so set the location
 		  // of the target to target_url#message. A bit ugly, but it works! A cache
 		  // bust parameter is added to ensure that repeat messages trigger the
 		  // callback.
-		  target.location = target_url.replace( /#.*$/, '' ) + '#' + (+new Date) + (cache_bust++) + '&' + message;
-		}
+		else
+		  // encodeURIComponent prevents errors when sending URLs and invalid URI characters
+		  target.location = target_url.replace( /#.*$/, '' ) + '#' + (+new Date) + (++cache_bust) + '&' + encodeURIComponent(message);
 	  };
 	  
-	  // Method: ender.receiveMessage
+	  // Method: window.receiveMessage
 	  // 
 	  // Register a single callback for either a window.postMessage call, if
 	  // supported, or if unsupported, for any change in the current window
@@ -116,11 +137,11 @@
 	  // 
 	  // Usage:
 	  // 
-	  // > ender.receiveMessage( callback [, source_origin ] [, delay ] );
+	  // > window.receiveMessage( callback [, source_origin ] [, delay ] );
 	  // 
 	  // Arguments:
 	  // 
-	  //  callback - (Function) This callback will execute whenever a <ender.postMessage>
+	  //  callback - (Function) This callback will execute whenever a <window.postMessage>
 	  //    message is received, provided the source_origin matches. If callback is
 	  //    omitted, any existing receiveMessage event bind or polling loop will be
 	  //    canceled.
@@ -138,21 +159,26 @@
 	  // 
 	  //  Nothing!
 	  
-	  fn.receiveMessage = function( callback, source_origin, delay ) {
+	  window.simpleReceiveMessage = function( callback, source_origin, delay ) {
+	  	var source_origin_type = typeof source_origin;
 		if ( has_postMessage ) {
 		  // Since the browser supports window.postMessage, the callback will be
 		  // bound to the actual event associated with window.postMessage.
 		  
 		  if ( callback ) {
 			// Unbind an existing callback if it exists.
-			rm_callback && fn.receiveMessage();
+			rm_callback && window.simpleReceiveMessage();
 			
 			// Bind the callback. A reference to the callback is stored for ease of
 			// unbinding.
 			rm_callback = function(e) {
-			  if ( ( typeof source_origin === 'string' && e.origin !== source_origin )
-				|| ( typeof source_origin === 'function' && source_origin( e.origin ) === FALSE ) ) {
+			  if ( ( source_origin_type === 'string' && e.origin !== source_origin )
+				|| ( source_origin_type === 'function' && source_origin( e.origin ) === FALSE ) ) {
 				return FALSE;
+			  }
+			  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
+			  if ( IE_VERSION == 9 || (IE_VERSION == 8 && JSON /*IE8 compatibility mode has no JSON*/ )) { 
+			    e = JSON.parse(e);
 			  }
 			  callback( e );
 			};
@@ -168,11 +194,11 @@
 		  // Since the browser sucks, a polling loop will be started, and the
 		  // callback will be called whenever the location.hash changes.
 		  
-		  interval_id && clearInterval( interval_id );
+		  if ( interval_id ) clearInterval( interval_id );
 		  interval_id = null;
 		  
 		  if ( callback ) {
-			delay = typeof source_origin === 'number'
+			delay = source_origin_type === 'number'
 			  ? source_origin
 			  : typeof delay === 'number'
 				? delay
@@ -185,16 +211,14 @@
 				re = /^#?\d+&/;
 			  if ( hash !== last_hash && hash !== original_hash && re.test( hash ) ) {
 				last_hash = hash;
-				if ( original_hash ) {
-					document.location.hash = original_hash; 
-				} else {
-					document.location.hash = ''; 
-				}
-				callback({ data: hash.replace( re, '' ) });
+				document.location.hash = original_hash ? original_hash : '';
+				// replace(/\+/gim, ' ') fixes a Mozilla bug
+				//   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
+				callback({ data: decodeURIComponent(hash.replace( re, '' ).replace(/\+/gim, ' ')) }); 
 			  }
 			}, delay );
 		  }
 		}
 	  };
-	  module.exports = {postMessage: fn.postMessage, receiveMessage: fn.receiveMessage};
+
 }(window);
