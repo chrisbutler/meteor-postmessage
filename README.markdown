@@ -15,9 +15,15 @@ simple-postMessage enables simple and easy `window.postMessage()` communication 
 
 **[Crockford's json2.js or json.js](https://github.com/douglascrockford/JSON-js) allows IE7 and IE6 to send object as message and is required if you want total compatibility between modern browsers + IE7/IE6.**
 
+## Using it ##
+
+Just import simple-postMessage.js (json2.js is an optional to support object serialization on IE8 compat., IE7 and IE6),
+and use `simplePostMessage(message, target_url, target)` and `simpleReceiveMessage(callback, source_origin, hashModeDelay)`
+
+
 ## Releases ##
 
-none yet
+visit the [releases section](https://github.com/LeoDutra/simple-postmessage/releases)
 
 
 ## History ##
