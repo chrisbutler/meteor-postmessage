@@ -148,7 +148,7 @@
 	  // 
 	  // Usage:
 	  // 
-	  // > window.receiveMessage( callback [, source_origin ] [, delay ] );
+	  // > window.receiveMessage( callback [, source_origin ] [, hashModeDelay ] );
 	  // 
 	  // Arguments:
 	  // 
@@ -162,7 +162,7 @@
 	  //  source_origin - (Function) If window.postMessage is available and this
 	  //    function returns false when passed the event.origin property, the
 	  //    callback will not be called.
-	  //  delay - (Number) An optional zero-or-greater delay in milliseconds at
+	  //  hashModeDelay - (Number) An optional zero-or-greater delay in milliseconds at
 	  //    which the polling loop will execute (for browser that don't support
 	  //    window.postMessage). If omitted, defaults to 100.
 	  // 
@@ -170,7 +170,7 @@
 	  // 
 	  //  Nothing!
 	  
-	  window.simpleReceiveMessage = function( callback, source_origin, delay ) {
+	  window.simpleReceiveMessage = function( callback, source_origin, hashModeDelay ) {
 	  	var source_origin_type = typeof source_origin;
 		if ( has_postMessage ) {
 		  // Since the browser supports window.postMessage, the callback will be
@@ -211,10 +211,10 @@
 		  }
 		  
 		  if ( callback ) {
-			delay = source_origin_type === 'number'
+			hashModeDelay = source_origin_type === 'number'
 			  ? source_origin
-			  : typeof delay === 'number'
-				? delay
+			  : typeof hashModeDelay === 'number'
+				? hashModeDelay
 				: 100;
 			
 			original_hash = document.location.hash;
@@ -232,7 +232,7 @@
 					data: deserialize(decodeURIComponent(hash.replace( re, '' ).replace(/\+/gim, ' ')))
 				}); 
 			  }
-			}, delay );
+			}, hashModeDelay );
 		  }
 		}
 	  };
