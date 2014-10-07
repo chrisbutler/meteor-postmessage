@@ -9,7 +9,7 @@ simple-postMessage enables simple and easy `window.postMessage()` communication 
 
 *simple-postMessage uses `JSON.parse/stringify()` to post/receive JavaScript objects as message on IE9 and IE8 (although, IE8 compat. mode has no JSON and you'll need [Crockford's json.js](https://github.com/douglascrockford/JSON-js) to optionally support it).*
 
-*simple-postMessage uses `encode/decodeURIComponent()` to send safe messages on older browsers (and fixes Mozilla's "+" problem).*
+*simple-postMessage uses `encodeURIComponent/decodeURIComponent()` to send safe messages on older browsers (and fixes Mozilla's "+" problem).*
 
 **IE8 (and lower) doesn’t allow to postMessage to other windows, only to iframes.**
 
