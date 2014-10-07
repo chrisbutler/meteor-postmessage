@@ -62,6 +62,11 @@
       var deserialize = function(any) {
         return JSON ? JSON.parse(any) : any;
       };
+      
+      //var origin = function(target) { 
+      //	var loc = target.location;
+      //	return loc.origin || loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port: '');
+      //};
 	
 	  // Method: window.postMessage
 	  // 
