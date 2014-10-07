@@ -1,5 +1,5 @@
 /* simple postMessage - v0.1.0
- * by Leonardo Dutra (https://github.com/LeoDutra)
+ * by Leonardo Dutra (https://github.com/LeoDutra/simple-postmessage)
  * Dual licensed under the MIT and GPL licenses.
  *
  * based on
