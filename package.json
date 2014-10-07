@@ -1,7 +1,7 @@
 {
   "name": "simple-postmessage",
   "description": "Simple and easy window.postMessage communication",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "homepage": "https://github.com/LeoDutra/simple-postmessage",
   "authors": ["Leo Dutra <@leodutra>"],
   "repository": {
