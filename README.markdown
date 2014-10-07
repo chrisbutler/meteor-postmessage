@@ -13,7 +13,7 @@ simple-postMessage enables simple and easy `window.postMessage()` communication 
 
 **IE8 (and lower) doesn’t allow to postMessage to other windows, only to iframes.**
 
-**[Crockford's json.js](https://github.com/douglascrockford/JSON-js) allows IE7 and IE6 to send object as message.**
+**[Crockford's json.js](https://github.com/douglascrockford/JSON-js) allows IE7 and IE6 to send object as message and is required if you want total compatibility between modern browsers + IE7/IE6.**
 
 ## Releases ##
 
