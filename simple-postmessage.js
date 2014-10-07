@@ -53,7 +53,7 @@
       // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
       //   http://stackoverflow.com/a/15983064/1260526
       ua = navigator.userAgent.toLowerCase(),
-      IE_VERSION = ~ua.indexOf('msie') && parseInt(ua.split('msie')[1], 10); // "~"" -> "x !== -1"
+      IE_VERSION = ~ua.indexOf('msie') ? parseInt(ua.split('msie')[1], 10) : FALSE; // "~"" -> "x !== -1"
 
       var serialize = function(any) {
       	return JSON ? JSON.stringify(any) : any;
