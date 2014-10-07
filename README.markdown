@@ -18,12 +18,12 @@ simple-postMessage enables simple and easy `window.postMessage()` communication 
 ## Using it ##
 
 Just import simple-postMessage.js (json2.js is an optional to support object serialization on IE8 compat., IE7 and IE6),
-and use `simplePostMessage(message, target_url, target)` and `simpleReceiveMessage(callback, source_origin, hashModeDelay)`
+and use `simplePostMessage(message, target_url, target)` to send messages and `simpleReceiveMessage(callback, source_origin, hashModeDelay)` to receive them.
 
 
 ## Releases ##
 
-visit the [releases section](https://github.com/LeoDutra/simple-postmessage/releases)
+Visit the [releases section](https://github.com/LeoDutra/simple-postmessage/releases)
 
 
 ## History ##
