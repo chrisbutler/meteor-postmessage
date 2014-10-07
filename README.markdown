@@ -2,6 +2,8 @@
 
 Version: 0.0.1, Last updated: 06d/10m/2014y
 
+Use simple-postMessage if you want to securely communicate IFrame content script with it's parent document/window, even on cross-domain interactions.
+
 simple-postMessage enables simple and easy `window.postMessage()` communication in browsers that support the HTML5 API
 (FF3+, Safari 4+, IE8+), while falling back to a `document.location.hash` communication method for all other browsers (IE6 and IE7 mainly).
 
