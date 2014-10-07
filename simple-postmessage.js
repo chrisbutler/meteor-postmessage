@@ -60,8 +60,8 @@
       };
 
       var deserialize = function(any) {
-      	return JSON ? JSON.parse(any) : any;
-      }
+        return JSON ? JSON.parse(any) : any;
+      };
 	
 	  // Method: window.postMessage
 	  // 
@@ -105,7 +105,7 @@
 
 		  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
 		  // works for IE7, IE6 if Crockford's json.js is present
-		  if ( IE_VERSION > 10 ) { 
+		  if ( IE_VERSION < 10 ) { 
 		    message = serialize(message);
 		  }
 
@@ -189,8 +189,8 @@
 			  }
 			  // IE9 and IE8 postMessage cannot send JS objects as message. Stringify is applied
 			  // works for IE7, IE6 if Crockford's json.js is present
-			  if ( IE_VERSION > 10 ) { 
-			    e = deserialize(e);
+			  if ( IE_VERSION < 10 ) { 
+			    e.data = deserialize(e.data);
 			  }
 			  callback( e );
 			};
