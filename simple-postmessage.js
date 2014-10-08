@@ -284,6 +284,8 @@
                         last_hash = hash;
                         document.location.hash = original_hash ? original_hash : "";
                         callback({
+                            // replace(/\+/gim, ' ') fixes a Mozilla bug
+                            //   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
                             data: deserialize(decodeURIComponent(hash.replace(re, "").replace(/\+/gim, " ")))
                         });
                     }
