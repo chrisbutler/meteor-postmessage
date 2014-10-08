@@ -1,6 +1,6 @@
 # simple-postMessage: <br>The cross-domain messaging helper #
 
-Version: 0.1.0, Last updated: 06d/10m/2014y
+Version: 0.2.0, Last updated: 06d/10m/2014y
 
 Use simple-postMessage if you want to securely communicate IFrame content script with it's parent document/window, even on cross-domain interactions.
 
@@ -18,7 +18,7 @@ simple-postMessage enables simple and easy `window.postMessage()` communication 
 ## Using it ##
 
 Just import simple-postMessage.js (json2.js is an optional to support object serialization on IE8 compat., IE7 and IE6),
-and use `simplePostMessage(message, target_url, target)` to send messages and `simpleReceiveMessage(callback, source_origin, hashModeDelay)` to receive them.
+and use `simplePostMessage(message, target_url, target)` to send messages and `simpleReceiveMessage(callback, source_origin)` to receive them.
 
 
 ## Releases ##
