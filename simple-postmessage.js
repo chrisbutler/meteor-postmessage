@@ -1,3 +1,34 @@
+/* simple postMessage - v0.2.0
+ * by Leonardo Dutra (https://github.com/LeoDutra/simple-postmessage)
+ * Dual licensed under the MIT and GPL licenses.
+ *
+ * based on
+ *
+ * ender postMessage - v0.1.3 - 5/1/2012
+ * by Thomas Sturm http://www.sturm.to
+ * Dual licensed under the MIT and GPL licenses.
+ *
+ * based on 
+ *
+ * jQuery postMessage - v0.5 - 9/11/2009
+ * http://benalman.com/projects/jquery-postmessage-plugin/
+ * Copyright (c) 2009 "Cowboy" Ben Alman
+ * Dual licensed under the MIT and GPL licenses.
+ * http://benalman.com/about/license/
+ */
+
+// Release History
+//   visit https://github.com/LeoDutra/simple-postmessage/releases
+//
+// Fork history
+//   ender postMessage
+//   0.1.3 - (5/1/2012) compatible with browserify
+//   0.1.2 - (5/26/2011) Initial Fork and Release
+//
+//   jQuery postMessage
+//   0.5 - (9/11/2009) Improved cache-busting
+//   0.4 - (8/25/2009) Initial release
+
 (function(window) {
     "use strict";
 
