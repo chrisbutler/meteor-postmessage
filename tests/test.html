@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>simplePostMessage Test</title>
+</head>
+
+<body>
+	<h1>External</h1>
+	<script src="lib/json.js"></script>
+	<script src="../simple-postMessage.js"></script>
+	<script>
+
+		var schemaHostPort = location.origin || location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
+
+		simpleReceiveMessage(function(e) {
+
+				try {
+					var ex;
+					console.log([e, e.data, e.data.some].join(' '));
+				} catch (ex) {}
+
+				var data;
+				try {
+					var ex;
+					if (typeof e.data == 'object') data = JSON.stringify(e.data);
+				} catch (ex) {}
+
+				if (!data) data = e.data;
+
+				var div = document.createElement('div');
+				div.innerHTML = data.toString();
+				var display = document.getElementById('display');
+				if (display.firstChild) display.insertBefore(div, display.firstChild);
+				else display.appendChild(div);
+			},
+            schemaHostPort
+		);
+	</script>
+	<iframe src="test-internal"></iframe>
+	<div id="display"></div>
+</body>
+
+</html>
