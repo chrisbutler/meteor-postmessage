@@ -85,7 +85,7 @@
                 if (hashQueue.length) {
                     var current = hashQueue.shift();
                     var ex;
-                    try { // FIXME: maybe target window is gone! Better be safe
+                    try { // FIXME: try/catch reason: maybe target window was closed! Better be safe
                         sendHash(current.target, current.hash);
                     }
                     catch(ex) {}
@@ -151,8 +151,8 @@
         // The browser supports window.postMessage, so call it with a targetOrigin
         // set appropriately, based on the target_url parameter.
         if (HAS_POSTMESSAGE) { // USE NATIVE POST MESSAGE -------------
+        
             if (IE_FIX) { 
-
                 // IE9- can't pass objects as message. Serialize using JSON.stringify (need Crockford's json2.js for IE8Compat, IE7 & IE6)
                 message = serialize(message);
             }
@@ -166,9 +166,10 @@
             // bust parameter is added to ensure that repeat messages trigger the
             // callback.
 
-            // encodeURIComponent avoids problem with invalid URL chars
             // target_url === '*', get the location of the target without hash (prevent bugs)
             target_url = target_url === '*' ? locationWithoutHash(target) : target_url.replace(/#.*$/, "");
+            
+            // encodeURIComponent avoids problem with invalid URL chars
             queueToSend(target, target_url + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
         }
     };
