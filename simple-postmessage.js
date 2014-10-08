@@ -1,4 +1,4 @@
-/* simple postMessage - v0.2.0
+/* simple postMessage - v0.2.1
  * by Leonardo Dutra (https://github.com/LeoDutra/simple-postmessage)
  * Dual licensed under the MIT and GPL licenses.
  *
@@ -61,11 +61,10 @@
         return JSON ? JSON.parse(any) : any;
     }
 
-    // MAY BE USEFUL
-    // function locationOrigin(target) { 
-    //  var loc = target.location;
-    //  return loc.origin || loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port : '');
-    // }
+    function locationOrigin(target) { 
+        var loc = target.location;
+        return loc.origin || loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port : '');
+    }
 
     function sendHash(target, hash) {
         target.location = hash;
@@ -134,13 +133,12 @@
     // 
     // Returns:
     // 
-    //  Nothing.
+    //  true - when message was sent 
+    //  false - if target_url is not defined
     //
     window.simplePostMessage = function(message, target_url, target) {
 
-        if (!target_url) {
-            return;
-        }
+        if (!target_url) return false;
         
         // opener is not null when this came from window.open(), parent is not null when this is inside of an iframe
         target = target || opener || parent || window; 
@@ -153,7 +151,9 @@
                 // IE9- can't pass objects as message. Serialize using JSON.stringify (need Crockford's json2.js for IE8Compat, IE7 & IE6)
                 message = serialize(message);
             }
-            target[POST_MESSAGE](message, target_url.replace(/([^:]+:\/\/[^\/]+).*/, "$1")); // only "schema://host:port" is needed
+            // only "schema://host:port" is needed
+            // defaults to "*" (any), which is bad for security but is an option of the spec
+            target[POST_MESSAGE](message, target_url === '*' ? target_url : target_url.replace(/([^:]+:\/\/[^\/]+).*/, "$1")); 
         } 
         else { // USE HASH ALTERNATIVE POST MESSAGE -------------
             // The browser does not support window.postMessage, so set the location
@@ -162,8 +162,11 @@
             // callback.
 
             // encodeURIComponent avoids problem with invalid URL chars
-            queueToSend(target, target_url.replace(/#.*$/, "") + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
+            // target_url === '*', get the location of the target without hash (prevent bugs)
+            target_url = target_url === '*' ? target.location.href.replace(target.location.hash, '') : target_url.replace(/#.*$/, "");
+            queueToSend(target, target_url + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
         }
+        return true;
     };
 
 
@@ -219,6 +222,12 @@
     //
     window.simpleReceiveMessage = function(callback, source_origin) {
         var source_origin_type = typeof source_origin;
+        
+        // isArray?
+        if (source_origin_type === 'object' && Object.prototype.toString.call(source_origin) === '[object Array]') {
+            source_origin_type = 'array';
+        }
+
         if (HAS_POSTMESSAGE) {  // USE NATIVE RECEIVER -------------
             // Since the browser supports window.postMessage, the callback will be
             // bound to the actual event associated with window.postMessage.
@@ -228,21 +237,21 @@
                 if (receiveCallback) window.simpleReceiveMessage();
 
                 // Bind the callback. A reference to the callback is stored for ease of unbinding.
-                receiveCallback = function(e) {
-                    if (/*STRING*/  source_origin_type === "string" && e.origin !== source_origin ||
-                        /*FUNCTION*/source_origin_type === "function" && source_origin(e.origin) === FALSE ||
-                        /*ARRAY*/   Object.prototype.toString.call(source_origin) === '[object Array]' && ~source_origin.indexOf(e.origin)) {
-                        return FALSE;
+                receiveCallback = function(messageEvent) {
+                    if (source_origin === '*' || // listens to all
+                        /*STRING*/  source_origin_type === "string" && messageEvent.origin === source_origin ||
+                        /*FUNCTION*/source_origin_type === "function" && source_origin(messageEvent.origin) ||
+                        /*ARRAY*/   source_origin_type === "array" && ~source_origin.indexOf(messageEvent.origin)) {
+
+                        if (IE_FIX) {
+                            messageEvent = copyProperties(messageEvent); // the damn Message Event is immutable... so we copy it for set deserialization to data
+
+                            // IE9- can't pass objects as message. Deserialize  using JSON.parse (need Crockford's json2.js for IE8Compat, IE7 & IE6)
+                            messageEvent.data = deserialize(messageEvent.data); 
+                        }
+
+                        callback(messageEvent);
                     }
-
-                    if (IE_FIX) {
-                        e = copyProperties(e); // the damn Message Event is immutable... so we copy it for set deserialization to data
-
-                        // IE9- can't pass objects as message. Deserialize  using JSON.parse (need Crockford's json2.js for IE8Compat, IE7 & IE6)
-                        e.data = deserialize(e.data); 
-                    }
-
-                    callback(e);
                 };
             }
 
