@@ -1,4 +1,4 @@
-/* simple postMessage - v0.2.1
+/* simple postMessage - v0.2.0
  * by Leonardo Dutra (https://github.com/LeoDutra/simple-postmessage)
  * Dual licensed under the MIT and GPL licenses.
  *
@@ -163,7 +163,7 @@
 
             // encodeURIComponent avoids problem with invalid URL chars
             // target_url === '*', get the location of the target without hash (prevent bugs)
-            target_url = target_url === '*' ? target.location.href.replace(target.location.hash, '') : target_url.replace(/#.*$/, "");
+            target_url = target_url === '*' ? locationOrigin(target) : target_url.replace(/#.*$/, "");
             queueToSend(target, target_url + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
         }
         return true;
