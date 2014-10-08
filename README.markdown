@@ -1,7 +1,5 @@
 # simple-postMessage: <br>The cross-domain messaging helper #
 
-Version: 0.2.0, Last updated: 06d/10m/2014y
-
 Use simple-postMessage if you want to securely communicate IFrame content script with it's parent document/window, even on cross-domain interactions.
 
 simple-postMessage enables simple and easy `window.postMessage()` communication in browsers that support the HTML5 API
