@@ -61,9 +61,13 @@
         return JSON ? JSON.parse(any) : any;
     }
 
-    function locationOrigin(target) { 
-        var loc = target.location;
-        return loc.origin || loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port : '');
+    // function locationOrigin(target) { 
+    //     var loc = target.location;
+    //     return loc.origin || loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port : '');
+    // }
+    
+    function locationWithoutHash(target) {
+        return target.location.href.replace(target.location.hash, '');
     }
 
     function sendHash(target, hash) {
@@ -132,13 +136,14 @@
     //    and then `window`
     // 
     // Returns:
-    // 
-    //  true - when message was sent 
-    //  false - if target_url is not defined
+    //    (Nothing)
+    //
+    // Throws:
+    //    Error - when no target_url (nor "*") is defined
     //
     window.simplePostMessage = function(message, target_url, target) {
 
-        if (!target_url) return false;
+        if (!target_url) throw 'simplePostMessage:: "target_url" expects at least a "*" (any target).';
         
         // opener is not null when this came from window.open(), parent is not null when this is inside of an iframe
         target = target || opener || parent || window; 
@@ -163,10 +168,9 @@
 
             // encodeURIComponent avoids problem with invalid URL chars
             // target_url === '*', get the location of the target without hash (prevent bugs)
-            target_url = target_url === '*' ? locationOrigin(target) : target_url.replace(/#.*$/, "");
+            target_url = target_url === '*' ? locationWithoutHash(target) : target_url.replace(/#.*$/, "");
             queueToSend(target, target_url + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
         }
-        return true;
     };
 
 
@@ -203,24 +207,25 @@
     //    message is received, provided the source_origin matches. If callback is
     //    omitted, any existing receiveMessage event bind or polling loop will be
     //    canceled.
+    //  source_origin - if source_origin is not defined, or is "*", the callback IS ALWAYS called
     //  source_origin - (String) If window.postMessage is available and this value
-    //    is not equal to the event.origin property, the callback will not be
+    //    is not equal to the event.origin property, the callback WILL NOT be
     //    called.
     //  source_origin - (Function) If window.postMessage is available and this
     //    function returns false when passed the event.origin property, the
-    //    callback will not be called.
+    //    callback WILL NOT be called.
     //  source_origin - (Array) If window.postMessage is available and this
     //    array does not contain the event.origin property value, the
-    //    callback will not be called.
+    //    callback WILL NOT be called.
     //  hashModeDelay - (Number) An optional zero-or-greater delay in milliseconds at
     //    which the polling loop will execute (for browser that don't support
     //    window.postMessage). If omitted, defaults to 100.
     // 
     // Returns:
-    // 
-    //  Nothing! 
+    //   (Nothing)
     //
-    window.simpleReceiveMessage = function(callback, source_origin) {
+    window.simpleReceiveMessage = function(callback, source_origin/*="*"*/) {
+
         var source_origin_type = typeof source_origin;
         
         // isArray?
@@ -238,7 +243,7 @@
 
                 // Bind the callback. A reference to the callback is stored for ease of unbinding.
                 receiveCallback = function(messageEvent) {
-                    if (source_origin === '*' || // listens to all
+                    if (!source_origin || source_origin === '*' || // listens to all
                         /*STRING*/  source_origin_type === "string" && messageEvent.origin === source_origin ||
                         /*FUNCTION*/source_origin_type === "function" && source_origin(messageEvent.origin) ||
                         /*ARRAY*/   source_origin_type === "array" && ~source_origin.indexOf(messageEvent.origin)) {
