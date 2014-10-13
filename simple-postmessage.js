@@ -228,8 +228,6 @@
     //
     window.simpleReceiveMessage = function(callback, source_origin/*="*"*/) {
 
-        var source_origin_type = typeof source_origin;
-
         if (HAS_POSTMESSAGE) {  // USE NATIVE RECEIVER -------------
             // Since the browser supports window.postMessage, the callback will be
             // bound to the actual event associated with window.postMessage.
@@ -237,6 +235,8 @@
             if (callback) {
                 // Unbind an existing callback if it exists (yes, recursive call without args)
                 if (receiveCallback) window.simpleReceiveMessage();
+
+                var source_origin_type = typeof source_origin;
 
                 // Bind the callback. A reference to the callback is stored for ease of unbinding.
                 receiveCallback = function(messageEvent) {
