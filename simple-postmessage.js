@@ -49,8 +49,8 @@
 
         // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
         //   http://stackoverflow.com/a/15983064/1260526
-        var USER_AGENT = navigator.userAgent.toLowerCase(),
-        IE_FIX = ~USER_AGENT.indexOf("msie") ? parseInt(USER_AGENT.split("msie")[1], 10) < 10 : FALSE;
+        var USER_AGENT_PIECE = navigator.userAgent.toLowerCase().split("msie"),
+        IE_FIX = USER_AGENT_PIECE[1] ? parseInt(USER_AGENT_PIECE[1], 10) < 10 : FALSE;
 
 
     function serialize(any) {
@@ -92,6 +92,7 @@
                 }
                 else if (queueInterval) { // SHALL require this additional cycle before clear 
                     clearInterval(queueInterval);
+                    hashQueue = [];
                     queueInterval = 0;
                 }
             }, INTERNAL_QUEUE_DELAY); 
@@ -143,7 +144,7 @@
     //
     window.simplePostMessage = function(message, target_url, target) {
 
-        if (!target_url) throw 'simplePostMessage:: "target_url" expects at least a "*" (any target).';
+        if (!target_url) throw 'simplePostMessage:: at least a "*" (any target) is expected for "target_url" argument.';
         
         // opener is not null when this came from window.open(), parent is not null when this is inside of an iframe
         target = target || opener || parent || window; 
@@ -228,11 +229,6 @@
     window.simpleReceiveMessage = function(callback, source_origin/*="*"*/) {
 
         var source_origin_type = typeof source_origin;
-        
-        // isArray?
-        if (source_origin_type === 'object' && Object.prototype.toString.call(source_origin) === '[object Array]') {
-            source_origin_type = 'array';
-        }
 
         if (HAS_POSTMESSAGE) {  // USE NATIVE RECEIVER -------------
             // Since the browser supports window.postMessage, the callback will be
@@ -247,10 +243,11 @@
                     if (!source_origin || source_origin === '*' || // listens to all
                         /*STRING*/  source_origin_type === "string" && messageEvent.origin === source_origin ||
                         /*FUNCTION*/source_origin_type === "function" && source_origin(messageEvent.origin) ||
-                        /*ARRAY*/   source_origin_type === "array" && ~source_origin.indexOf(messageEvent.origin)) {
+                        /*ARRAY*/   Object.prototype.toString.call(source_origin) === '[object Array]'
+                                        && ~source_origin.indexOf(messageEvent.origin)) {
 
                         if (IE_FIX) {
-                            messageEvent = copyProperties(messageEvent); // the damn Message Event is immutable... so we copy it for set deserialization to data
+                            messageEvent = copyProperties(messageEvent); // the damn Message Event is immutable... so we copy it, deserialize data and set in the copied object
 
                             // IE9- can't pass objects as message. Deserialize  using JSON.parse (need Crockford's json2.js for IE8Compat, IE7 & IE6)
                             messageEvent.data = deserialize(messageEvent.data); 
@@ -283,7 +280,7 @@
                     var re = /^#?--HASH--\d+&/;
                     if (hash !== last_hash && hash !== original_hash && re.test(hash)) {
                         last_hash = hash;
-                        document.location.hash = original_hash ? original_hash : "";
+                        document.location.hash = original_hash ? original_hash : '';
                         callback({
                             // replace(/\+/gim, ' ') fixes a Mozilla bug
                             //   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
