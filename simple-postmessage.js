@@ -273,7 +273,6 @@
                 receiveInterval = clearInterval(receiveInterval);
             }
             if (callback) {
-                //hashModeDelay = source_origin_type === "number" ? source_origin : typeof hashModeDelay === "number" ? hashModeDelay : INTERNAL_HASH_DELAY;
                 original_hash = document.location.hash;
                 receiveInterval = setInterval(function() {
                     var hash = document.location.hash;
