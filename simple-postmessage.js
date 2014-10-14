@@ -49,7 +49,7 @@
 
         // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
         //   http://stackoverflow.com/a/15983064/1260526
-        IE_FIX = parseInt(navigator.userAgent.toLowerCase().split("msie")[1], 10) < 10;
+        var IE_FIX = parseInt(navigator.userAgent.toLowerCase().split("msie")[1], 10) < 10;
 
 
     function serialize(any) {
@@ -60,13 +60,12 @@
         return JSON ? JSON.parse(any) : any;
     }
 
-    // function locationOrigin(target) { 
-    //     var loc = target.location;
-    //     return loc.origin || loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port : '');
-    // }
+    function locationOrigin(location) { 
+        return location.origin || location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
+    }
     
-    function locationWithoutHash(target) {
-        return target.location.href.replace(target.location.hash, '');
+    function locationWithoutHash(location) {
+        return location.href.replace(location.hash, '');
     }
 
     function sendHash(target, hash) {
@@ -83,11 +82,11 @@
             if (!queueInterval) queueInterval = setInterval(function() {
                 if (hashQueue.length) {
                     var current = hashQueue.shift();
-                    var ex;
-                    try { // FIXME: try/catch reason: maybe target window was closed! Better be safe
+                    try { 
+                        // FIXME: try/catch reason: maybe target window was closed! Better be safe
                         sendHash(current.target, current.hash);
                     }
-                    catch(ex) {}
+                    catch(current) {}
                 }
                 else if (queueInterval) { // SHALL require this additional cycle before clear 
                     clearInterval(queueInterval);
@@ -98,15 +97,23 @@
         }
     }
 
-    function copyProperties(obj) {
+    function copyProperties(obj, destination) {
         // the damn Message Event is immutable... so we copy it for set deserialization to data
-        var copy = {};
+        destination = destination || {};
         for (var prop in obj) {
             if (typeof prop !== "function") { // hasOwnProperty = no property :(
-                copy[prop] = obj[prop];
+                destination[prop] = obj[prop];
             }
         }
-        return copy;
+        return destination;
+    }
+
+    function verifyOrigin(source_origin, messageEvent_origin) {
+        return !source_origin || source_origin === '*' || // listens to all
+            /*STRING*/  messageEvent_origin === source_origin ||
+            /*FUNCTION*/typeof source_origin === "function" && source_origin(messageEvent_origin) ||
+            /*ARRAY*/   Object.prototype.toString.call(source_origin) === '[object Array]'
+                            && ~source_origin.indexOf(messageEvent_origin);
     }
 
     // Method: window.postMessage
@@ -167,7 +174,14 @@
             // callback.
 
             // target_url === '*', get the location of the target without hash (prevent bugs)
-            target_url = target_url === '*' ? locationWithoutHash(target) : target_url.replace(/#.*$/, "");
+            target_url = target_url === '*' ? locationWithoutHash(target.location) : target_url.replace(/#.*$/, "");
+            
+            message = { // Fake MessageEvent
+                type: 'message',
+                timeStamp: +new Date,
+                data: message,
+                origin: locationOrigin(location)
+            };
             
             // encodeURIComponent avoids problem with invalid URL chars
             queueToSend(target, target_url + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
@@ -235,15 +249,9 @@
                 // Unbind an existing callback if it exists (yes, recursive call without args)
                 if (receiveCallback) window.simpleReceiveMessage();
 
-                var source_origin_type = typeof source_origin;
-
                 // Bind the callback. A reference to the callback is stored for ease of unbinding.
                 receiveCallback = function(messageEvent) {
-                    if (!source_origin || source_origin === '*' || // listens to all
-                        /*STRING*/  source_origin_type === "string" && messageEvent.origin === source_origin ||
-                        /*FUNCTION*/source_origin_type === "function" && source_origin(messageEvent.origin) ||
-                        /*ARRAY*/   Object.prototype.toString.call(source_origin) === '[object Array]'
-                                        && ~source_origin.indexOf(messageEvent.origin)) {
+                    if (verifyOrigin(source_origin, messageEvent.origin)) {
 
                         if (IE_FIX) {
                             messageEvent = copyProperties(messageEvent); // the damn Message Event is immutable... so we copy it, deserialize data and set in the copied object
@@ -279,11 +287,13 @@
                     if (hash !== last_hash && hash !== original_hash && re.test(hash)) {
                         last_hash = hash;
                         document.location.hash = original_hash ? original_hash : '';
-                        callback({
-                            // replace(/\+/gim, ' ') fixes a Mozilla bug
-                            //   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
-                            data: deserialize(decodeURIComponent(hash.replace(re, "").replace(/\+/gim, " ")))
-                        });
+                        
+                        // replace(/\+/gim, ' ') fixes a Mozilla bug
+                        //   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
+                        var messageEvent = deserialize(decodeURIComponent(hash.replace(re, "").replace(/\+/gim, " ")));
+                        if (verifyOrigin(source_origin, messageEvent.origin)) {
+                            callback(messageEvent);
+                        }
                     }
                 }, INTERNAL_HASH_DELAY);
             }
