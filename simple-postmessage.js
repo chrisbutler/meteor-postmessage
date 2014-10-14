@@ -49,8 +49,7 @@
 
         // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
         //   http://stackoverflow.com/a/15983064/1260526
-        var USER_AGENT = navigator.userAgent.toLowerCase(),
-        IE_FIX = ~USER_AGENT.indexOf("msie") ? parseInt(USER_AGENT.split("msie")[1], 10) < 10 : FALSE;
+        var IE_FIX = parseInt(navigator.userAgent.toLowerCase().split("msie")[1], 10) < 10;
 
 
     function serialize(any) {
@@ -61,13 +60,12 @@
         return JSON ? JSON.parse(any) : any;
     }
 
-    // function locationOrigin(target) { 
-    //     var loc = target.location;
-    //     return loc.origin || loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port : '');
-    // }
+    function locationOrigin(location) { 
+        return location.origin || location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
+    }
     
-    function locationWithoutHash(target) {
-        return target.location.href.replace(target.location.hash, '');
+    function locationWithoutHash(location) {
+        return location.href.replace(location.hash, '');
     }
 
     function sendHash(target, hash) {
@@ -84,29 +82,38 @@
             if (!queueInterval) queueInterval = setInterval(function() {
                 if (hashQueue.length) {
                     var current = hashQueue.shift();
-                    var ex;
-                    try { // FIXME: try/catch reason: maybe target window was closed! Better be safe
+                    try { 
+                        // FIXME: try/catch reason: maybe target window was closed! Better be safe
                         sendHash(current.target, current.hash);
                     }
-                    catch(ex) {}
+                    catch(current) {}
                 }
                 else if (queueInterval) { // SHALL require this additional cycle before clear 
                     clearInterval(queueInterval);
+                    hashQueue = [];
                     queueInterval = 0;
                 }
             }, INTERNAL_QUEUE_DELAY); 
         }
     }
 
-    function copyProperties(obj) {
+    function copyProperties(obj, destination) {
         // the damn Message Event is immutable... so we copy it for set deserialization to data
-        var copy = {};
+        destination = destination || {};
         for (var prop in obj) {
             if (typeof prop !== "function") { // hasOwnProperty = no property :(
-                copy[prop] = obj[prop];
+                destination[prop] = obj[prop];
             }
         }
-        return copy;
+        return destination;
+    }
+
+    function verifyOrigin(source_origin, messageEvent_origin) {
+        return !source_origin || source_origin === '*' || // listens to all
+            /*STRING*/  messageEvent_origin === source_origin ||
+            /*FUNCTION*/typeof source_origin === "function" && source_origin(messageEvent_origin) ||
+            /*ARRAY*/   Object.prototype.toString.call(source_origin) === '[object Array]'
+                            && ~source_origin.indexOf(messageEvent_origin);
     }
 
     // Method: window.postMessage
@@ -143,7 +150,7 @@
     //
     window.simplePostMessage = function(message, target_url, target) {
 
-        if (!target_url) throw 'simplePostMessage:: "target_url" expects at least a "*" (any target).';
+        if (!target_url) throw 'simplePostMessage:: at least a "*" (any target) is expected for "target_url" argument.';
         
         // opener is not null when this came from window.open(), parent is not null when this is inside of an iframe
         target = target || opener || parent || window; 
@@ -167,7 +174,14 @@
             // callback.
 
             // target_url === '*', get the location of the target without hash (prevent bugs)
-            target_url = target_url === '*' ? locationWithoutHash(target) : target_url.replace(/#.*$/, "");
+            target_url = target_url === '*' ? locationWithoutHash(target.location) : target_url.replace(/#.*$/, "");
+            
+            message = { // Fake MessageEvent
+                type: 'message',
+                timeStamp: +new Date,
+                data: message,
+                origin: locationOrigin(location)
+            };
             
             // encodeURIComponent avoids problem with invalid URL chars
             queueToSend(target, target_url + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
@@ -227,13 +241,6 @@
     //
     window.simpleReceiveMessage = function(callback, source_origin/*="*"*/) {
 
-        var source_origin_type = typeof source_origin;
-        
-        // isArray?
-        if (source_origin_type === 'object' && Object.prototype.toString.call(source_origin) === '[object Array]') {
-            source_origin_type = 'array';
-        }
-
         if (HAS_POSTMESSAGE) {  // USE NATIVE RECEIVER -------------
             // Since the browser supports window.postMessage, the callback will be
             // bound to the actual event associated with window.postMessage.
@@ -244,13 +251,10 @@
 
                 // Bind the callback. A reference to the callback is stored for ease of unbinding.
                 receiveCallback = function(messageEvent) {
-                    if (!source_origin || source_origin === '*' || // listens to all
-                        /*STRING*/  source_origin_type === "string" && messageEvent.origin === source_origin ||
-                        /*FUNCTION*/source_origin_type === "function" && source_origin(messageEvent.origin) ||
-                        /*ARRAY*/   source_origin_type === "array" && ~source_origin.indexOf(messageEvent.origin)) {
+                    if (verifyOrigin(source_origin, messageEvent.origin)) {
 
                         if (IE_FIX) {
-                            messageEvent = copyProperties(messageEvent); // the damn Message Event is immutable... so we copy it for set deserialization to data
+                            messageEvent = copyProperties(messageEvent); // the damn Message Event is immutable... so we copy it, deserialize data and set in the copied object
 
                             // IE9- can't pass objects as message. Deserialize  using JSON.parse (need Crockford's json2.js for IE8Compat, IE7 & IE6)
                             messageEvent.data = deserialize(messageEvent.data); 
@@ -276,19 +280,20 @@
                 receiveInterval = clearInterval(receiveInterval);
             }
             if (callback) {
-                //hashModeDelay = source_origin_type === "number" ? source_origin : typeof hashModeDelay === "number" ? hashModeDelay : INTERNAL_HASH_DELAY;
                 original_hash = document.location.hash;
                 receiveInterval = setInterval(function() {
                     var hash = document.location.hash;
                     var re = /^#?--HASH--\d+&/;
                     if (hash !== last_hash && hash !== original_hash && re.test(hash)) {
                         last_hash = hash;
-                        document.location.hash = original_hash ? original_hash : "";
-                        callback({
-                            // replace(/\+/gim, ' ') fixes a Mozilla bug
-                            //   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
-                            data: deserialize(decodeURIComponent(hash.replace(re, "").replace(/\+/gim, " ")))
-                        });
+                        document.location.hash = original_hash ? original_hash : '';
+                        
+                        // replace(/\+/gim, ' ') fixes a Mozilla bug
+                        //   http://stackoverflow.com/questions/75980/best-practice-escape-or-encodeuri-encodeuricomponent/12796866#comment30658935_12796866
+                        var messageEvent = deserialize(decodeURIComponent(hash.replace(re, "").replace(/\+/gim, " ")));
+                        if (verifyOrigin(source_origin, messageEvent.origin)) {
+                            callback(messageEvent);
+                        }
                     }
                 }, INTERNAL_HASH_DELAY);
             }
