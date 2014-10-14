@@ -49,8 +49,7 @@
 
         // ie 10- version detection. Useful to fix IE9 and IE8 problem when passing objects as message
         //   http://stackoverflow.com/a/15983064/1260526
-        var USER_AGENT_PIECE = navigator.userAgent.toLowerCase().split("msie"),
-        IE_FIX = USER_AGENT_PIECE[1] ? parseInt(USER_AGENT_PIECE[1], 10) < 10 : FALSE;
+        IE_FIX = parseInt(navigator.userAgent.toLowerCase().split("msie")[1], 10) < 10;
 
 
     function serialize(any) {
