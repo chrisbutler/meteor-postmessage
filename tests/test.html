@@ -29,12 +29,12 @@
 				if (!data) data = e.data;
 
 				var div = document.createElement('div');
-				div.innerHTML = data.toString();
+				div.innerHTML = 'timeStamp: ' + e.timeStamp + ' ______ type: ' + e.type + ' ______ origin: ' + e.origin + ' ______ data: '+ data.toString();
 				var display = document.getElementById('display');
 				if (display.firstChild) display.insertBefore(div, display.firstChild);
 				else display.appendChild(div);
 			},
-            schemaHostPort
+            		schemaHostPort
 		);
 	</script>
 	<iframe src="test-internal"></iframe>
