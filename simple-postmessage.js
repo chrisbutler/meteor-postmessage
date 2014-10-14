@@ -183,6 +183,8 @@
                 origin: locationOrigin(location)
             };
             
+            if (++cache_bust > 9999999) cache_bust = 0; // Don't try to touch the Infinity. God's logic would rape you.
+            
             // encodeURIComponent avoids problem with invalid URL chars
             queueToSend(target, target_url + "#--HASH--" + (+new Date) + (++cache_bust) + "&" + encodeURIComponent(serialize(message)))
         }
