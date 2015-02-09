@@ -6,4 +6,4 @@ https://github.com/LeoDutra/js-data-structures/blob/master/Queue.js
 
 - Separate cross compatibility script from full spec script (make 2 `.js` files)
 
-- identify if target is an `HTMLIFrameElement` . If so, use target's "content window" (`target.contentWindow`) as target;
+- Identify if target is a `HTMLIFrameElement` . If so, use target's "content window" (`target.contentWindow`) as target;
