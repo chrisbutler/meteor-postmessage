@@ -7,3 +7,5 @@ https://github.com/LeoDutra/js-data-structures/blob/master/Queue.js
 - Separate cross compatibility script from full spec script (split code into two `.js` files)
 
 - Identify if target is a `HTMLIFrameElement` . If so, use target's "content window" (`target.contentWindow`) as target;
+
+- http://stackoverflow.com/questions/16226924/is-cross-origin-postmessage-broken-in-ie10
