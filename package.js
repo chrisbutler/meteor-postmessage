@@ -1,6 +1,6 @@
 Package.describe({
   name: 'chrisbutler:postmessage',
-  summary: 'An implementation of the Chromecast CASTV2 protocol',
+  summary: 'Simple and easy frame cross-domain Iframe and window communication through Web Messaging API',
   version: '1.0.0',
   git: 'https://github.com/chrisbutler/meteor-postmessage'
 });
